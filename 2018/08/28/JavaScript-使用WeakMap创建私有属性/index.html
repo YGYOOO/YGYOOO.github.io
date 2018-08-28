@@ -5,15 +5,19 @@
   
 
   
-  <title>顾伊凡</title>
+  <title>JavaScript-使用WeakMap创建对象的私有属性 | 顾伊凡</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="顾伊凡">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="我们都知道JavaScript本身并没有共有、私有属性的概念，不过我们可以通过一些方式实现私有属性。WeakMap也是ES6里就有了，不过我曾一直不太了解它的应用场景，看到有文章说用它的应用场景之一是实现私有属性。怎么实现？为何要用它实现？关于用WeakMap实现私有属性的方式，本文会从它最原始的面貌看起，理解使用WeakMap的意义。 闭包-可行吗？提到“私有”的实现方式，我的第一反应就是闭包，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JavaScript-使用WeakMap创建对象的私有属性">
+<meta property="og:url" content="http://yoursite.com/2018/08/28/JavaScript-使用WeakMap创建私有属性/index.html">
 <meta property="og:site_name" content="顾伊凡">
+<meta property="og:description" content="我们都知道JavaScript本身并没有共有、私有属性的概念，不过我们可以通过一些方式实现私有属性。WeakMap也是ES6里就有了，不过我曾一直不太了解它的应用场景，看到有文章说用它的应用场景之一是实现私有属性。怎么实现？为何要用它实现？关于用WeakMap实现私有属性的方式，本文会从它最原始的面貌看起，理解使用WeakMap的意义。 闭包-可行吗？提到“私有”的实现方式，我的第一反应就是闭包，">
 <meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2018-08-28T02:58:54.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="顾伊凡">
+<meta name="twitter:title" content="JavaScript-使用WeakMap创建对象的私有属性">
+<meta name="twitter:description" content="我们都知道JavaScript本身并没有共有、私有属性的概念，不过我们可以通过一些方式实现私有属性。WeakMap也是ES6里就有了，不过我曾一直不太了解它的应用场景，看到有文章说用它的应用场景之一是实现私有属性。怎么实现？为何要用它实现？关于用WeakMap实现私有属性的方式，本文会从它最原始的面貌看起，理解使用WeakMap的意义。 闭包-可行吗？提到“私有”的实现方式，我的第一反应就是闭包，">
   
     <link rel="alternate" href="/atom.xml" title="顾伊凡" type="application/atom+xml">
   
@@ -60,9 +64,7 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-JavaScript-使用WeakMap创建私有属性" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-JavaScript-使用WeakMap创建私有属性" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2018/08/28/JavaScript-使用WeakMap创建私有属性/" class="article-date">
   <time datetime="2018-08-28T02:58:49.000Z" itemprop="datePublished">2018-08-28</time>
@@ -75,8 +77,8 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2018/08/28/JavaScript-使用WeakMap创建私有属性/">JavaScript-使用WeakMap创建对象的私有属性</a>
+    <h1 class="article-title" itemprop="name">
+      JavaScript-使用WeakMap创建对象的私有属性
     </h1>
   
 
@@ -111,11 +113,9 @@
     </footer>
   </div>
   
-</article>
-
-
+    
   
-
+</article>
 
 </section>
         
