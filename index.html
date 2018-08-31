@@ -62,6 +62,117 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-彻底搞懂white-space、word-break、word-wrap" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/" class="article-date">
+  <time datetime="2018-08-31T06:08:36.000Z" itemprop="datePublished">2018-08-31</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/">彻底搞懂white-space、word-break、word-wrap</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>white-space、word-break、word-wrap估计是css里最基本又最让人迷惑的三个属性了，我也是经常搞混，所以今天我们就把这三个属性彻底搞清楚。</p>
+<h2 id="测试代码"><a href="#测试代码" class="headerlink" title="测试代码"></a>测试代码</h2><p>下面是本文中用于测试各个样式展现情况的html代码：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"box"</span>&gt;</span></span><br><span class="line">  Hi&amp;nbsp;&amp;nbsp;,</span><br><span class="line">  This   is a incomprehensibilities long word.</span><br><span class="line">  <span class="tag">&lt;/<span class="name">br</span>&gt;</span></span><br><span class="line">  你好&amp;nbsp;&amp;nbsp;，</span><br><span class="line">  这   是一个不可思议的长单词</span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure><br>现在只给了它一个宽度和边框，没有其它任何样式，下面是它目前的展现情况：<br><img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/init.png" class="myImg" width="180"><br>可以看到，<code>nbsp;</code>和<code>&lt;/br&gt;</code>可以正常发挥作用，而连续的空格会被缩减成一个（比如This和is之间的三个空格），换行符也全都无效。句子超过一行后会自动换行，而长度超过一行的单个单词会超出边界。<br>接下来我们看下， 给它上面三个css属性赋值后会出现什么变化。</p>
+<h2 id="white-space"><a href="#white-space" class="headerlink" title="white-space"></a>white-space</h2><p>正如它的名字，<strong>这个属性是用来控制空白字符的显示的</strong>，同时还能控制是否自动换行。它有五个值：<code>normal | nowrap | pre | pre-wrap | pre-line</code>。因为默认是<code>normal</code>，所以我们主要研究下其它四种值时的展现情况。</p>
+<p>（为了方便比较，下文所有图，左侧为<code>normal</code>即初始情况，右侧为赋上相应值时的情况）</p>
+<p>先看下<code>white-space:nowrap</code>时的情况：</p>
+<img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/white-space_nowrap.png" width="500">
+<p>不仅空格被合并，换行符无效，连原本的自动换行都没了！只有<code>&lt;/br&gt;</code>才能导致换行！所以这个值的表现还是挺简单的，我们可以理解为<code>永不换行</code>。</p>
+<p><code>white-space:pre</code>：</p>
+<img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/white-space_pre.png" width="500">
+<p>空格和换行符全都被保留了下来！不过自动换行还是没了。保留，所以<code>pre</code>其实是<code>preserve</code>的缩写，这样就好记了。</p>
+<p><code>white-space:pre-wrap</code>：</p>
+<img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/white-space_pre-wrap.png" width="335">
+<p>显然<code>pre-wrap</code>就是<code>preserve</code>+<code>wrap</code>，保留空格和换行符，且可以自动换行。</p>
+<p><code>white-space:pre-line</code>：</p>
+<img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/white-space_pre-line.png" width="335">
+<p>空格被合并了，但是换行符可以发挥作用，<code>line</code>应该是<code>new line</code>的意思，自动换行还在，所以<code>pre-line</code>其实是<code>preserve</code>+<code>new line</code>+<code>wrap</code>。</p>
+<p><strong>我整理了一个表予以总结：</strong></p>
+<table>
+<thead>
+<tr>
+<th>是否能发挥作用</th>
+<th>换行符</th>
+<th>空格</th>
+<th>自动换行</th>
+<th>&lt;/br&gt;、nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>normal</td>
+<td>×</td>
+<td>×（合并）</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>nowrap</td>
+<td>×</td>
+<td>×（合并）</td>
+<td>×</td>
+<td>√</td>
+</tr>
+<tr>
+<td>pre</td>
+<td>√</td>
+<td>√（合并）</td>
+<td>×</td>
+<td>√</td>
+</tr>
+<tr>
+<td>pre-wrap</td>
+<td>√</td>
+<td>√（合并）</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>pre-line</td>
+<td>√</td>
+<td>×（合并）</td>
+<td>√</td>
+<td>√</td>
+</tr>
+</tbody>
+</table>
+<h2 id="word-break"><a href="#word-break" class="headerlink" title="word-break"></a>word-break</h2><p>从这个名字可以知道，<strong>这个属性是控制单词如何被拆分换行的</strong>。它有五个值：<code>normal | break-all | keep-all</code>。</p>
+<p><code>word-break:keep-all</code>：</p>
+<img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/word-break_keep-all.png" width="355">
+<p><strong>所有“单词”一律不拆分换行</strong>，注意，我这里的“单词”包括连续的中文字符（还有日文、韩文等），或者可以理解为<strong>只有空格可以触发自动换行</strong></p>
+<p><code>word-break:break-all</code>：</p>
+<img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/word-break_break-all.png" width="320">
+<p><strong>所有单词碰到边界一律拆分换行</strong>，不管你是<code>incomprehensibilities</code>这样一行都显示不下的单词，还是<code>long</code>这样很短的单词，至少碰到边界，都会被强制拆分换行。所以用<code>word-break:break-all</code>时要慎重呀。<br>这样的效果好像并不太好呀，能不能就把incomprehensibilities拆一下，其它的单词不拆呢？那就需要下面这个属性了：</p>
+<h2 id="word-wrap"><a href="#word-wrap" class="headerlink" title="word-wrap"></a>word-wrap</h2><blockquote>
+<p>注：word-wrap 属性原本属于微软的一个私有属性，在 CSS3 现在的文本规范草案中已经被重名为 overflow-wrap 。 word-wrap 现在被当作 overflow-wrap 的 “别名”。 稳定的谷歌 Chrome 和 Opera 浏览器版本支持这种新语法。</p>
+</blockquote>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/08/31/彻底搞懂white-space、word-break、word-wrap/" data-id="cjlhmbetm0001x3r9u3te7gxm" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-JavaScript-使用WeakMap创建私有属性" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2018/08/28/JavaScript-使用WeakMap创建私有属性/" class="article-date">
@@ -105,7 +216,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/08/28/JavaScript-使用WeakMap创建私有属性/" data-id="cjlbwkojv0000w8r9vll5qslr" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/08/28/JavaScript-使用WeakMap创建私有属性/" data-id="cjlhmbetg0000x3r93d7h9nnn" class="article-share-link">Share</a>
       
       
     </footer>
@@ -144,6 +255,10 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/">彻底搞懂white-space、word-break、word-wrap</a>
+          </li>
         
           <li>
             <a href="/2018/08/28/JavaScript-使用WeakMap创建私有属性/">JavaScript-使用WeakMap创建对象的私有属性</a>
