@@ -23,7 +23,7 @@
 <meta property="og:image" content="http://yoursite.com/2018/08/31/彻底搞懂white-space、word-break、word-wrap/word-break_keep-all.png">
 <meta property="og:image" content="http://yoursite.com/2018/08/31/彻底搞懂white-space、word-break、word-wrap/word-break_break-all.png">
 <meta property="og:image" content="http://yoursite.com/2018/08/31/彻底搞懂white-space、word-break、word-wrap/word-wrap_break-word.png">
-<meta property="og:updated_time" content="2018-08-31T09:05:39.000Z">
+<meta property="og:updated_time" content="2018-08-31T09:28:56.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="彻底搞懂white-space、word-break、word-wrap">
 <meta name="twitter:description" content="white-space、word-break、word-wrap（overflow-wrap）估计是css里最基本又最让人迷惑的三个属性了，我也是经常搞混，所以今天我们就把这三个属性彻底搞清楚。 测试代码(文末有本文中所有例子的代码)下面是本文中用于测试各个样式展现情况的html代码：1234567&amp;lt;div id=&quot;box&quot;&amp;gt;  Hi&amp;amp;nbsp;&amp;amp;nbsp;,  Thi">
@@ -141,14 +141,14 @@
 <tr>
 <td>pre</td>
 <td>√</td>
-<td>√（合并）</td>
+<td>√</td>
 <td>×</td>
 <td>√</td>
 </tr>
 <tr>
 <td>pre-wrap</td>
 <td>√</td>
-<td>√（合并）</td>
+<td>√</td>
 <td>√</td>
 <td>√</td>
 </tr>
@@ -167,24 +167,24 @@
 <p><strong>所有“单词”一律不拆分换行</strong>，注意，我这里的“单词”包括连续的中文字符（还有日文、韩文等），或者可以理解为<strong>只有空格可以触发自动换行</strong></p>
 <p><code>word-break:break-all</code>：</p>
 <img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/word-break_break-all.png" width="320">
-<p><strong>所有单词碰到边界一律拆分换行</strong>，不管你是<code>incomprehensibilities</code>这样一行都显示不下的单词，还是<code>long</code>这样很短的单词，至少碰到边界，都会被强制拆分换行。所以用<code>word-break:break-all</code>时要慎重呀。<br>这样的效果好像并不太好呀，能不能就把incomprehensibilities拆一下，其它的单词不拆呢？那就需要下面这个属性了：</p>
+<p><strong>所有单词碰到边界一律拆分换行</strong>，不管你是<code>incomprehensibilities</code>这样一行都显示不下的单词，还是<code>long</code>这样很短的单词，只要碰到边界，都会被强制拆分换行。所以用<code>word-break:break-all</code>时要慎重呀。<br>这样的效果好像并不太好呀，能不能就把incomprehensibilities拆一下，其它的单词不拆呢？那就需要下面这个属性了：</p>
 <h2 id="word-wrap（overflow-wrap）"><a href="#word-wrap（overflow-wrap）" class="headerlink" title="word-wrap（overflow-wrap）"></a>word-wrap（overflow-wrap）</h2><p><code>word-wrap</code>又叫做<code>overflow-wrap</code>：</p>
 <blockquote>
 <p>word-wrap 属性原本属于微软的一个私有属性，在 CSS3 现在的文本规范草案中已经被重名为 overflow-wrap 。 word-wrap 现在被当作 overflow-wrap 的 “别名”。 稳定的谷歌 Chrome 和 Opera 浏览器版本支持这种新语法。 </p>
 </blockquote>
-<p><strong>这个属性也是控制单词如何被拆分换行的</strong>，实际上是作为<code>word-break</code>的互补，它只有两个个值：<code>normal | break-word</code>，那我们看下<code>break-word</code>：</p>
+<p><strong>这个属性也是控制单词如何被拆分换行的</strong>，实际上是作为<code>word-break</code>的互补，它只有两个值：<code>normal | break-word</code>，那我们看下<code>break-word</code>：</p>
 <img src="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/word-wrap_break-word.png" width="320">
-<p>终于达到了上文我们希望的效果，<strong>只有当一个单词一整行都显示不下时，才会拆分换行该单词</strong>。<br>所以我觉得<code>overflow-wrap</code>更好理解好记一些，溢出换行，只有长到溢出的单词才会被强制换行！</p>
+<p>终于达到了上文我们希望的效果，<strong>只有当一个单词一整行都显示不下时，才会拆分换行该单词</strong>。<br>所以我觉得<code>overflow-wrap</code>更好理解好记一些，overflow，只有长到溢出的单词才会被强制换行！</p>
 <p>（其实前面的<code>word-break</code>属性除了列出的那三个值外，也有个<code>break-word</code>值，效果跟这里的<code>word-wrap:break-word</code>一样，然而只有Chrome、Safari等部分浏览器支持）</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>最后总结一下三个属性</p>
 <ul>
 <li>white-space，<strong>控制空白字符的显示</strong>，同时还能控制是否自动换行。它有五个值：<code>normal | nowrap | pre | pre-wrap | pre-line</code></li>
 <li>word-break，<strong>控制单词如何被拆分换行</strong>。它有三个值：<code>normal | break-all | keep-all</code></li>
-<li>word-wrap（overflow-wrap）<strong>控制长度超过一行的单词是否被拆分换行</strong>，是<code>word-break</code>的补充，它只有两个个值：<code>normal | break-word</code></li>
+<li>word-wrap（overflow-wrap）<strong>控制长度超过一行的单词是否被拆分换行</strong>，是<code>word-break</code>的补充，它只有两个值：<code>normal | break-word</code></li>
 </ul>
 <p>相信读完了本文，你应该对white-space、word-break、word-wrap有比较系统的认识了吧，如果短时间还是记不住，常看一看就能记住的~</p>
 <p><br></p>
-<p>下面是本文里所有例子的代码，每个属性做成了选项，方便操作~</p>
+<p>下面是本文里所有例子的代码的地址，每个属性做成了选项，方便操作学习~</p>
 <iframe id="cp_embed_jvyrWK" src="//codepen.io/YGYOOO/embed/jvyrWK?height=400&theme-id=dark&slug-hash=jvyrWK&default-tab=html,result" scrolling="no" frameborder="no" height="400" allowtransparency="true" allowfullscreen="true" class="cp_embed_iframe" style="width: 100%; overflow: hidden;"></iframe>
       
     </div>
