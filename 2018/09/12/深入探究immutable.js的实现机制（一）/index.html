@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>深入探究immutable.js的实现机制（一） | 顾伊凡</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Immutable.js 由 Facebook 花费 3 年时间打造，为前端开发提供了很多便利，如今 React+Redux+Immutable.js 的组合已经成为许多项目的标配。我们知道 Immutable.js 采用了持久化数据结构和结构共享，保证每一个对象都是不可变的，任何添加、修改、删除等操作都会生成一个新的对象，且通过结构共享等方式大幅提高性能。网上已经有很多文章简单介绍了 Immut">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入探究immutable.js的实现机制（一）">
+<meta property="og:url" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/index.html">
+<meta property="og:site_name" content="顾伊凡">
+<meta property="og:description" content="Immutable.js 由 Facebook 花费 3 年时间打造，为前端开发提供了很多便利，如今 React+Redux+Immutable.js 的组合已经成为许多项目的标配。我们知道 Immutable.js 采用了持久化数据结构和结构共享，保证每一个对象都是不可变的，任何添加、修改、删除等操作都会生成一个新的对象，且通过结构共享等方式大幅提高性能。网上已经有很多文章简单介绍了 Immut">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/console截图.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/console截图2.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/tree1.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/tree2.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/tree3.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/vectorTrie1.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/vectorTrie2.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/base7.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/base2.png">
+<meta property="og:updated_time" content="2018-09-13T13:15:20.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入探究immutable.js的实现机制（一）">
+<meta name="twitter:description" content="Immutable.js 由 Facebook 花费 3 年时间打造，为前端开发提供了很多便利，如今 React+Redux+Immutable.js 的组合已经成为许多项目的标配。我们知道 Immutable.js 采用了持久化数据结构和结构共享，保证每一个对象都是不可变的，任何添加、修改、删除等操作都会生成一个新的对象，且通过结构共享等方式大幅提高性能。网上已经有很多文章简单介绍了 Immut">
+<meta name="twitter:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/console截图.png">
+  
+    <link rel="alternate" href="/atom.xml" title="顾伊凡" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">顾伊凡</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-深入探究immutable.js的实现机制（一）" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/09/12/深入探究immutable.js的实现机制（一）/" class="article-date">
+  <time datetime="2018-09-12T08:29:46.000Z" itemprop="datePublished">2018-09-12</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      深入探究immutable.js的实现机制（一）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Immutable.js 由 Facebook 花费 3 年时间打造，为前端开发提供了很多便利，如今 React+Redux+Immutable.js 的组合已经成为许多项目的标配。我们知道 Immutable.js 采用了<code>持久化数据结构</code>和<code>结构共享</code>，保证每一个对象都是不可变的，任何添加、修改、删除等操作都会生成一个新的对象，且通过<code>结构共享</code>等方式大幅提高性能。<br>网上已经有很多文章简单介绍了 Immutable.js 的原理，但基本都是浅尝辄止，本文会更深入一些探究其实现机制。</p>
+<blockquote>
+<p>实际上 Immutable.js 参考了 Clojure 中的<code>PersistentVector</code>的实现方式，并有所优化和取舍，想了解的可以阅读（共五篇，这是第一篇）：<a href="https://hypirion.com/musings/understanding-persistent-vector-pt-1" target="_blank" rel="noopener">https://hypirion.com/musings/understanding-persistent-vector-pt-1</a> </p>
+</blockquote>
+<h1 id="简单的例子"><a href="#简单的例子" class="headerlink" title="简单的例子"></a>简单的例子</h1><p>在深入研究前，我们先看个简单的例子：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map1 = Immutable.Map(&#123;&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">800</span>; i++) &#123;</span><br><span class="line">  map1 = map1.set(<span class="built_in">Math</span>.random(), <span class="built_in">Math</span>.random());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(map1);</span><br></pre></td></tr></table></figure><br>这段代码先后往map里写入了800对随机生成的key和value。我们先看一下控制台的输出结果，对它的数据结构有个大致的认知（粗略扫一眼就行了）：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/console截图.png" width="500"><br>可以看到这是一个树的结构，子节点以数组的形式放在<code>nodes</code>属性里，nodes的最大长度似乎是32个。了解过bitmap的人可能已经猜到了这里<code>bitmap</code>属性是做什么的，它涉及到对于树宽度的压缩，这些后面会说。<br>其中一个节点层层展开后长这样：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/console截图2.png" width="500"><br>这个<code>ValueNode</code>存的就是一组值了，<code>entry[0]</code>是key，<code>entry[1]</code>是value。</p>
+<p>大致看个形状就行了，下面我们会由浅入深逐步揭开它的面纱。</p>
+<h1 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h1><p>我们先看下维基对于<code>持久化数据结构</code>的定义：</p>
+<blockquote>
+<p>In computing, a persistent data structure is a data structure that always preserves the previous version of itself when it is modified.<br>通俗点解释就是，对于一个<code>持久化数据结构</code>，每次修改后我们都会得到一个新的版本，且旧版本可以完好保留。</p>
+</blockquote>
+<p>Immutable.js 用树实现了<code>持久化数据结构</code>，先看下图这颗树：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/tree1.png" width="300"><br>假如我们要在<code>g</code>下面插入一个节点<code>h</code>，如何在插入后让原有的树保持不变？最简单的方法当然是重新生成一颗树：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/tree2.png" width="350"><br>但这样做显然是很低效的，每次操作都需要生成一颗全新的树，既费时又费空间，因而有了如下的优化方案：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/tree3.png" width="300"><br>我们新生成一个根节点，对于有修改的部分，我们把相应路径上的所有节点重新生成，对于本次操作没有修改的部分，我们可以直接把相应的旧的节点拷贝过去，这其实就是<code>结构共享</code>。这样每次操作同样会获得一个全新的版本（根节点变了，新的<code>a</code>!==旧的<code>a</code>），历史版本可以完好保留，同时也节约了空间和时间。<br>至此我们发现，用树实现<code>持久化数据结构</code>还是比较简单的，但是Immutable.js提供了多种数据结构，比如回到开头的例子，一个map如何成为<code>持久化数据结构</code>呢？</p>
+<h1 id="Vector-Trie"><a href="#Vector-Trie" class="headerlink" title="Vector Trie"></a>Vector Trie</h1><p>实际上对于一个map，我们完全可以把它视为一颗扁平的树，与上文实现<code>持久化数据结构</code>的方式一样，每次操作后生成一个新的对象，把旧的值全都依次拷贝过去，对需要修改或添加的属性，重新生成。这其实就是<code>Object.assign</code>，然而这样每次操作都要把所有值拷贝一遍，显然效率很低，有没有更好的方法呢？<br>在实现<code>持久化数据结构</code>时，Immutable.js 参考了<code>Vector Trie</code>这种数据结构（其实更准确的叫法是<code>persistent bit-partitioned vector trie</code>或<code>bitmapped vector trie</code>，不过这是Clojure里使用的一种数据结构，Immutable.js 里的相关实现与其并不完全相同），我们先了解下它的基本结构。<br>假如我们有一个 map ，key 全都是数字（当然你也可以把它理解为数组）<code>{0: ‘banana’, 1: ‘grape’, 2: ‘lemon’, 3: ‘orange’, 4: ‘apple’}</code>，为了构造一棵二叉<code>Vector Trie</code>，我们可以先把所有的key转换为二进制的形式：<code>{‘000’: ‘banana’, ‘001’: ‘grape’, ‘010’: ‘lemon’, ‘011’: ‘orange’, ‘100’: ‘apple’}</code>，然后如下图构建<code>Vector Trie</code>：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/vectorTrie1.png" width="300"><br>可以看到，<code>Vector Trie</code>的每个节点是一个数组，数组里有<code>0</code>和<code>1</code>两个数，表示一个二进制数，所有值都存在叶子节点上，比如我们要找<code>001</code>的值时，只需顺着<code>0</code> <code>0</code> <code>1</code>找下来，即可得到<code>grape</code>。那么想实现<code>持久化数据结构</code>当然也不难了，比如我们想添加一个<code>5: ‘watermelon’</code>：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/vectorTrie2.png" width="400"><br>可见对于一个 key 全是数字的map，我们完全可以通过一颗<code>Vector Trie</code>来实现它，同时实现<code>持久化数据结构</code>。如果key不是数字怎么办呢？转成数字就行了。 Immutable.js 实现了一个<a href="https://github.com/facebook/immutable-js/blob/e65e5af806ea23a32ccf8f56c6fabf39605bac80/src/Hash.js#L10:17" target="_blank" rel="noopener">hash</a>函数，可以把一个值转换成相应数字。<br>这里为了简化，每个节点数组长度仅为2，这样在数据量大的时候，树会变得很深，查询会很耗时，所以可以扩大数组的长度，Immutable.js 选择了32。为什么是32，不是16？不是31？首先，31这种数字是可以直接排除的，数组长度得是2的整数次幂，这里涉及到实现<code>Vector Trie</code>时的一个优化，接下来我们先研究下这点。</p>
+<h1 id="数字分区（Digit-partitioning）"><a href="#数字分区（Digit-partitioning）" class="headerlink" title="数字分区（Digit partitioning）"></a>数字分区（Digit partitioning）</h1><p><code>数字分区</code>指我们把一个 key 作为数字对应到一棵前缀树上，正如上节所讲的那样。<br>假如我们有一个 key <code>9128</code>，以 7 为基数，即数组长度是 7，它在<code>Vector Trie</code>里是这么表示的：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/base7.png" width="500"><br>需要5层数组，我们先找到<code>3</code>这个分支，再找到<code>5</code>，之后依次到<code>0</code>。为了依次得到这几个数字，我们可以预先把<code>9128</code>转为7进制的<code>35420</code>，但其实没有这个必要，因为转为 7 进制形式的过程就是不断进行除法并取余得到每一位上的数，类似的操作可以在每一层上依次执行。<br>不过，一般你学过的十进制转其它进制可能是不断除以基数(比如这里是 7 )然后取余，从最后一位开始依次得到7进制的每一位数。而这里我们需要先得到第一位上的数，依次得到第二位、第三位…。我们可以采用这个方法<code>key / radix ^ (level - 1) % radix</code>得到每一位的数（<strong>为了简便，本文除代码外所有<code>/</code>符号皆表示除法且向下取整，<code>^</code>皆表示次幂，<code>^</code>运算最先计算</strong>），其中<code>radix</code>是每层数组的长度，即转换成几进制，<code>level</code>是当前在第几层。比如这里<code>key</code>是<code>9128</code>，<code>radix</code>是<code>7</code>，一开始<code>level</code>是<code>5</code>，通过这个式子我们可以得到第一层的数<code>3</code>。（至于为何这个式子怎么理解，你可以把<code>9128</code>写成 7 进制这样的形式<code>3 × 7^4 + 5 × 7^3 + 4 × 7^2 + 2 × 7^1 + 0 × 7^0</code>，然后把<code>level</code>的几个值代进去试一下就能理解。或者你可以把<code>radix ^ (level - 1)</code>理解为这层数组的每个元素下可以表示的数字的总大小。）<br>代码实现如下：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> RADIX = <span class="number">7</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">find</span>(<span class="params">key</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> node = root; <span class="comment">// root是根节点，在别的地方定义了</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// depth是当前树的深度。这种计算方式跟上面列出的式子是等价的，但可以避免多次指数计算。这个size就是上面的radix ^ (level - 1)</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> size = <span class="built_in">Math</span>.pow(RADIX, (depth - <span class="number">1</span>)); size &gt; <span class="number">1</span>; size /= RADIX) &#123;</span><br><span class="line">    node = node[<span class="built_in">Math</span>.floor(key / size) % RADIX];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> node[key % RADIX];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="位分区（Bit-Partitioning）"><a href="#位分区（Bit-Partitioning）" class="headerlink" title="位分区（Bit Partitioning）"></a>位分区（Bit Partitioning）</h1><p>显然，以上<code>数字分区</code>的方法是有点耗时的，在每一层我们都要进行两次除法一次取模，显然这样并不高效，<code>位分区</code>就是对其的一种优化。<br><code>位分区</code>实际上是<code>数字分区</code>的一个子集，所有以2的整数次幂（2，4，8，16，32…）为基数的<code>数字分区</code>前缀树，都可以转为<code>位分区</code>。基于一些位运算相关的知识，我们就能避免一些耗时的计算。<br><code>数字分区</code>把 key 拆分成一个个数字，而<code>位分区</code>把 key 分成一组组 bit。比如一个 32 路的前缀树，<code>数字分区</code>的方法是把 key 以 32 为基数拆分（实际上就是32进制），而<code>位分区</code>是把它以 5bit 拆分，实际上就是把 32 进制数的每一位看做 5 个 bit ，这样原本的很多计算就可以用更高效的位运算的方式代替。因为现在基数是 32，即<code>radix</code>为 32，所以前面的式子现在是<code>key / 32 ^ (level - 1) % 32</code>，而 32 又可以写作<code>2^5</code>，那么该式子可以转成这样<code>key / 2 ^ (5 × (level - 1)) % 2 ^ 5</code>。根据位运算相关的知识我们知道<code>a / 2 ^ n === a &gt;&gt;&gt; n </code>、<code>a % 2 ^ n === a &amp; (n - 1) </code>，这样我们可以得到下面的代码：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> BITS = <span class="number">5</span>;</span><br><span class="line"><span class="keyword">const</span> WIDTH = <span class="number">1</span> &lt;&lt; BITS, <span class="comment">// 2^5 = 32</span></span><br><span class="line"><span class="keyword">const</span> MASK = WIDTH - <span class="number">1</span>; <span class="comment">// 31，即11111</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">find</span>(<span class="params">key</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> node = root; </span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> bits = (depth - <span class="number">1</span>) * BITS; bits &gt; <span class="number">0</span>; bits -= BITS) &#123;</span><br><span class="line">    node = node[(key &gt;&gt;&gt; bits) &amp; MASK];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> node[key &amp; MASK];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>这样我们每次查找的速度就会得到提升。可以看一张图进行理解，为了简化展示，假设我们只有2位分区即4路的前缀树，对于<code>626</code>，我们的查找过程如下：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/base2.png" width="500"><br><code>626</code>的二进制形式是<code>1001110010</code>，所以通过以上的位运算，我们便依次得到了<code>10</code>、<code>01</code>…</p>
+<h1 id="效率如何"><a href="#效率如何" class="headerlink" title="效率如何"></a>效率如何</h1><p>因为采用了<code>结构共享</code>，在添加、修改、删除操作后，我们避免了将 map 中所有值拷贝一遍，所以特别是在数据量较大时，这些操作相比<code>Object.assign</code>有明显提升。<br>然而，查询速度似乎减慢了？我们知道 map 里根据 key 查找的速度是<code>O(1)</code>，这里由于变成了一棵树，查询的时间复杂度变成了<code>O(log N)</code>，准确说是<code>O(log32 N)</code>（以32为底）。<br>等等 32 叉树？这棵树可不是一般地宽啊，Javascript里对象可以拥有的key的最大数量一般不会超过<code>2^32</code>个（<a href="http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.2.2" target="_blank" rel="noopener">ECMA-262第五版</a>里定义了JS里由于数组的长度本身是一个 32 位数，所以数组长度不应大于 2^32 - 1 ，JS里对象的实现相对复杂，但大部分功能是建立在数组上的，所以在大部分场景下我们可以认为对象里 key 的数量不会超过 2^32 - 1。相关讨论见<a href="https://stackoverflow.com/questions/30194088/do-javascript-variables-have-a-storage-limit" target="_blank" rel="noopener">这里</a>），所以我们可以认为查找的时间复杂度为“<code>O(log32 2^32)</code>”，差不多就是“<code>O(log 7)</code>”，所以我们可以认为在实际运用中，5bit (32路)的 Vector Trie 查询的时间复杂度是常数级的，32 叉树就是用了空间换时间。<br>空间…这个 32 叉树占用的空间也太大了吧？即便只有三层，我们也会有超过<code>32 × 32 × 32 = 32768</code>个节点。当然 Immutable.js 在具体实现时肯定不会傻乎乎的占用这么大空间，它对树的高度和宽度都做了“压缩”，此外，还对操作效率进行了其它一些优化，比如对 list 进行了“tail优化”。相关内容我们下一章讨论。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/" data-id="cjm0l93y50000vsr9eke5miko" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/09/04/彻底搞懂https的加密机制/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">彻底搞懂HTTPS的加密机制</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/css-white-space-word-break-word-wrap-html/">css,white-space,word-break,word-wrap,html</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/" style="font-size: 10px;">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a> <a href="/tags/css-white-space-word-break-word-wrap-html/" style="font-size: 10px;">css,white-space,word-break,word-wrap,html</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">September 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">August 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/09/12/深入探究immutable.js的实现机制（一）/">深入探究immutable.js的实现机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/09/04/彻底搞懂https的加密机制/">彻底搞懂HTTPS的加密机制</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/">彻底搞懂white-space、word-break、word-wrap</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/28/JavaScript-使用WeakMap创建私有属性/">JavaScript-使用WeakMap创建对象的私有属性</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 顾伊凡<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
