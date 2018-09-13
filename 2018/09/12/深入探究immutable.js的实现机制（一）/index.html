@@ -23,7 +23,7 @@
 <meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/vectorTrie2.png">
 <meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/base7.png">
 <meta property="og:image" content="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/base2.png">
-<meta property="og:updated_time" content="2018-09-13T13:15:20.000Z">
+<meta property="og:updated_time" content="2018-09-13T13:18:00.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="深入探究immutable.js的实现机制（一）">
 <meta name="twitter:description" content="Immutable.js 由 Facebook 花费 3 年时间打造，为前端开发提供了很多便利，如今 React+Redux+Immutable.js 的组合已经成为许多项目的标配。我们知道 Immutable.js 采用了持久化数据结构和结构共享，保证每一个对象都是不可变的，任何添加、修改、删除等操作都会生成一个新的对象，且通过结构共享等方式大幅提高性能。网上已经有很多文章简单介绍了 Immut">
@@ -98,7 +98,7 @@
       
         <p>Immutable.js 由 Facebook 花费 3 年时间打造，为前端开发提供了很多便利，如今 React+Redux+Immutable.js 的组合已经成为许多项目的标配。我们知道 Immutable.js 采用了<code>持久化数据结构</code>和<code>结构共享</code>，保证每一个对象都是不可变的，任何添加、修改、删除等操作都会生成一个新的对象，且通过<code>结构共享</code>等方式大幅提高性能。<br>网上已经有很多文章简单介绍了 Immutable.js 的原理，但基本都是浅尝辄止，本文会更深入一些探究其实现机制。</p>
 <blockquote>
-<p>实际上 Immutable.js 参考了 Clojure 中的<code>PersistentVector</code>的实现方式，并有所优化和取舍，想了解的可以阅读（共五篇，这是第一篇）：<a href="https://hypirion.com/musings/understanding-persistent-vector-pt-1" target="_blank" rel="noopener">https://hypirion.com/musings/understanding-persistent-vector-pt-1</a> </p>
+<p>实际上 Immutable.js 参考了 Clojure 中的<code>PersistentVector</code>的实现方式，并有所优化和取舍，想了解的可以阅读<a href="https://hypirion.com/musings/understanding-persistent-vector-pt-1" target="_blank" rel="noopener">这里</a>（共五篇，这是第一篇）</p>
 </blockquote>
 <h1 id="简单的例子"><a href="#简单的例子" class="headerlink" title="简单的例子"></a>简单的例子</h1><p>在深入研究前，我们先看个简单的例子：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map1 = Immutable.Map(&#123;&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">800</span>; i++) &#123;</span><br><span class="line">  map1 = map1.set(<span class="built_in">Math</span>.random(), <span class="built_in">Math</span>.random());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(map1);</span><br></pre></td></tr></table></figure><br>这段代码先后往map里写入了800对随机生成的key和value。我们先看一下控制台的输出结果，对它的数据结构有个大致的认知（粗略扫一眼就行了）：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/console截图.png" width="500"><br>可以看到这是一个树的结构，子节点以数组的形式放在<code>nodes</code>属性里，nodes的最大长度似乎是32个。了解过bitmap的人可能已经猜到了这里<code>bitmap</code>属性是做什么的，它涉及到对于树宽度的压缩，这些后面会说。<br>其中一个节点层层展开后长这样：<br><img src="/2018/09/12/深入探究immutable.js的实现机制（一）/console截图2.png" width="500"><br>这个<code>ValueNode</code>存的就是一组值了，<code>entry[0]</code>是key，<code>entry[1]</code>是value。</p>
 <p>大致看个形状就行了，下面我们会由浅入深逐步揭开它的面纱。</p>
