@@ -8,13 +8,14 @@
   <title>JavaScript-使用WeakMap创建对象的私有属性 | 顾伊凡</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="我们都知道JavaScript本身并没有共有、私有属性的概念，不过我们可以通过一些方式实现私有属性。WeakMap也是ES6里就有了，不过我曾一直不太了解它的应用场景，看到有文章说用它的应用场景之一是实现私有属性。怎么实现？为何要用它实现？关于用WeakMap实现私有属性的方式，本文会从它最原始的面貌看起，理解使用WeakMap的意义。 闭包-可行吗？提到“私有”的实现方式，我的第一反应就是闭包，">
+<meta name="keywords" content="JavaScript,WeakMap,ES6">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JavaScript-使用WeakMap创建对象的私有属性">
 <meta property="og:url" content="http://yoursite.com/2018/08/28/JavaScript-使用WeakMap创建私有属性/index.html">
 <meta property="og:site_name" content="顾伊凡">
 <meta property="og:description" content="我们都知道JavaScript本身并没有共有、私有属性的概念，不过我们可以通过一些方式实现私有属性。WeakMap也是ES6里就有了，不过我曾一直不太了解它的应用场景，看到有文章说用它的应用场景之一是实现私有属性。怎么实现？为何要用它实现？关于用WeakMap实现私有属性的方式，本文会从它最原始的面貌看起，理解使用WeakMap的意义。 闭包-可行吗？提到“私有”的实现方式，我的第一反应就是闭包，">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-08-28T02:58:54.000Z">
+<meta property="og:updated_time" content="2018-09-14T03:46:30.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JavaScript-使用WeakMap创建对象的私有属性">
 <meta name="twitter:description" content="我们都知道JavaScript本身并没有共有、私有属性的概念，不过我们可以通过一些方式实现私有属性。WeakMap也是ES6里就有了，不过我曾一直不太了解它的应用场景，看到有文章说用它的应用场景之一是实现私有属性。怎么实现？为何要用它实现？关于用WeakMap实现私有属性的方式，本文会从它最原始的面貌看起，理解使用WeakMap的意义。 闭包-可行吗？提到“私有”的实现方式，我的第一反应就是闭包，">
@@ -110,6 +111,8 @@
       <a data-url="http://yoursite.com/2018/08/28/JavaScript-使用WeakMap创建私有属性/" data-id="cjlyw56nc00009or90ait91d5" class="article-share-link">Share</a>
       
       
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/JavaScript-WeakMap-ES6/">JavaScript,WeakMap,ES6</a></li></ul>
+
     </footer>
   </div>
   
@@ -142,7 +145,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/css-white-space-word-break-word-wrap-html/">css,white-space,word-break,word-wrap,html</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JavaScript-WeakMap-ES6/">JavaScript,WeakMap,ES6</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/css-white-space-word-break-word-wrap-html/">css,white-space,word-break,word-wrap,html</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-Vector-Trie-Clojure/">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,Vector Trie,Clojure</a></li></ul>
     </div>
   </div>
 
@@ -152,7 +155,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/" style="font-size: 10px;">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a> <a href="/tags/css-white-space-word-break-word-wrap-html/" style="font-size: 10px;">css,white-space,word-break,word-wrap,html</a>
+      <a href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/" style="font-size: 10px;">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a> <a href="/tags/JavaScript-WeakMap-ES6/" style="font-size: 10px;">JavaScript,WeakMap,ES6</a> <a href="/tags/css-white-space-word-break-word-wrap-html/" style="font-size: 10px;">css,white-space,word-break,word-wrap,html</a> <a href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-Vector-Trie-Clojure/" style="font-size: 10px;">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,Vector Trie,Clojure</a>
     </div>
   </div>
 
