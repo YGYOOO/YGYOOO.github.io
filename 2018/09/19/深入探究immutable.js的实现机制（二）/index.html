@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>深入探究immutable.js的实现机制（二） | 顾伊凡</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="上一篇我们研究了 Immutable.js 持久化数据结构的基本实现原理，对其核心数据结构Vector Trie进行了介绍，并着重探究了其中的位分区机制。采用位分区的根本原因是为了优化速度，而对于空间的优化， Immutable.js 是怎么做的呢？接下来先探讨下这点。 HAMTHAMT全称hash array mapped trie，其基本原理与上篇所说的Vector Trie非常相似，不过它会">
+<meta name="keywords" content="immutable.js,immutable,JavaScript,持久化数据结构,结构共享,bitmap,transient,hash冲突,Vector Trie,Clojure">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入探究immutable.js的实现机制（二）">
+<meta property="og:url" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/index.html">
+<meta property="og:site_name" content="顾伊凡">
+<meta property="og:description" content="上一篇我们研究了 Immutable.js 持久化数据结构的基本实现原理，对其核心数据结构Vector Trie进行了介绍，并着重探究了其中的位分区机制。采用位分区的根本原因是为了优化速度，而对于空间的优化， Immutable.js 是怎么做的呢？接下来先探讨下这点。 HAMTHAMT全称hash array mapped trie，其基本原理与上篇所说的Vector Trie非常相似，不过它会">
+<meta property="og:locale" content="default">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/trie1.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/trie2.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/trie3.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/bitmap1.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/bitmap2.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/time.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/console截图.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/console截图2.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/transient.png">
+<meta property="og:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/console.png">
+<meta property="og:updated_time" content="2018-09-21T08:05:21.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入探究immutable.js的实现机制（二）">
+<meta name="twitter:description" content="上一篇我们研究了 Immutable.js 持久化数据结构的基本实现原理，对其核心数据结构Vector Trie进行了介绍，并着重探究了其中的位分区机制。采用位分区的根本原因是为了优化速度，而对于空间的优化， Immutable.js 是怎么做的呢？接下来先探讨下这点。 HAMTHAMT全称hash array mapped trie，其基本原理与上篇所说的Vector Trie非常相似，不过它会">
+<meta name="twitter:image" content="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/trie1.png">
+  
+    <link rel="alternate" href="/atom.xml" title="顾伊凡" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">顾伊凡</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-深入探究immutable.js的实现机制（二）" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/09/19/深入探究immutable.js的实现机制（二）/" class="article-date">
+  <time datetime="2018-09-19T08:55:46.000Z" itemprop="datePublished">2018-09-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      深入探究immutable.js的实现机制（二）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>上一篇我们研究了 Immutable.js 持久化数据结构的基本实现原理，对其核心数据结构<code>Vector Trie</code>进行了介绍，并着重探究了其中的<code>位分区</code>机制。采用<code>位分区</code>的根本原因是为了优化速度，而对于空间的优化， Immutable.js 是怎么做的呢？接下来先探讨下这点。</p>
+<h1 id="HAMT"><a href="#HAMT" class="headerlink" title="HAMT"></a>HAMT</h1><p><code><a href="https://en.wikipedia.org/wiki/Hash_array_mapped_trie" target="_blank" rel="noopener">HAMT</a></code>全称<code>hash array mapped trie</code>，其基本原理与上篇所说的<code>Vector Trie</code>非常相似，不过它会对树进行压缩，以节约一些空间。 Immutable.js 参考了<code>HAMT</code>对树进行了高度和节点内部的压缩。</p>
+<h1 id="树高压缩"><a href="#树高压缩" class="headerlink" title="树高压缩"></a>树高压缩</h1><p>假设我们有一个 2 叉 <code>Vector Trie</code>，现在存了一个值，key为<code>110</code>，它会被存到<code>0</code> <code>1</code> <code>1</code>这条路径下，如下图：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/trie1.png" width="350"><br>显然，这图里展示的结构已经进行了最简单的优化，因为现在只存了一个值，所以把与<code>110</code>无关的节点去掉了。还能进行什么优化吗？我们发现，中间那两个节点也是可以去掉的，如下图：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/trie2.png" width="310"><br>获取该值时，我们先从<code>0</code>找下来，发现这直接是一个根节点，那取它存储的值就行了。就是说在不产生混淆的情况下，我们可以用尽可能少的二进制位去标识这个 key 。这样我们就进行了高度上的压缩，既减少了空间，又减少了查找和修改的时间。<br>如果要添加一个值，它的 key 结尾也是<code>0</code>，该怎么做呢？很简单，如下图：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/trie3.png" width="340"><br>我们只要在需要的时候增加或减少节点即可。</p>
+<h1 id="节点内部压缩-Bitmap"><a href="#节点内部压缩-Bitmap" class="headerlink" title="节点内部压缩-Bitmap"></a>节点内部压缩-Bitmap</h1><p>上一篇我们提到， Immutable.js 的 Trie 里，每个节点数组的长度是 32 ，然而在很多情况下，这 32 个位置大部分是用不到的，这么大的数组显然也占用了很大空间。使用<code>Bitmap</code>，我们就可以对数组进行压缩。<br>我们先拿长度为 8 的数组举例：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/bitmap1.png" width="300"><br>我们实际上只是用了数组的下标对 key 进行索引，这样想数组第 5、6、7 位显然目前是毫无作用的，那 0、2、3 呢？我们有必要为了一个下标 4 去维持一个长度为5的数组吗？我们只需要指明“假想数组”中下标为 1 和为 4 的位置有数就可以了。这里就可以用到<code><a href="https://en.wikipedia.org/wiki/Bit_array" target="_blank" rel="noopener">bitmap</a></code>，如下：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/bitmap2.png" width="300"><br>我们采用了一个数，以其二进制形式表达“假想的长度为8的数组”中的占位情况，1 表示数组里相应下标位置有值，0 则表示相应位置为空。比如这个二进制数第 4 位（从右往左，从 0 开始数）现在是 1 ，就表示数组下标为 4 的位置有值。这样原本的长度为 8 的数组就可以压缩到 2 。<br>注意这个数组中的元素还是按照“假想数组”中的顺序排列的，这样我们若要取“假想数组”中下标为 i 的元素时，首先是判断该位置有没有值，若有，下一步就是得到在它之前有几个元素，即在二进制数里第 i 位之前有多少位为 1 ，假设数量为 a ，那么该元素在当前压缩后的数组里下标就是 a 。<br>具体操作中，我们可以通过<code>bitmap &amp; (1 &lt;&lt; i - 1)</code>，得到一个二进制数，该二进制数中只有第 i 位之前有值的地方为 1 ，其余全为 0 ，下面我们只需统计该二进制数里 1 的数量即可得到下标。计算二进制数中 1 数量的过程被称作<code><a href="https://en.wikipedia.org/wiki/Hamming_weight" target="_blank" rel="noopener">popcount</a></code>，具体算法有很多，我了解不多就不展开了，前面点击后是维基的地址，感兴趣的可以研究下。<br>下面我们看一下这部分的源码：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">get(shift, keyHash, key, notSetValue) &#123;</span><br><span class="line">  <span class="keyword">if</span> (keyHash === <span class="literal">undefined</span>) &#123;</span><br><span class="line">    keyHash = hash(key);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">const</span> bit = <span class="number">1</span> &lt;&lt; ((shift === <span class="number">0</span> ? keyHash : keyHash &gt;&gt;&gt; shift) &amp; MASK);</span><br><span class="line">  <span class="keyword">const</span> bitmap = <span class="keyword">this</span>.bitmap;</span><br><span class="line">  <span class="keyword">return</span> (bitmap &amp; bit) === <span class="number">0</span></span><br><span class="line">    ? notSetValue</span><br><span class="line">    : <span class="keyword">this</span>.nodes[popCount(bitmap &amp; (bit - <span class="number">1</span>))].get(</span><br><span class="line">        shift + SHIFT,</span><br><span class="line">        keyHash,</span><br><span class="line">        key,</span><br><span class="line">        notSetValue</span><br><span class="line">      );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>可见它与我们上一篇看到的源码并没有太大不同（Immutable.js 里如果一个数组占用不超过一半（ 16 个），就会对其进行压缩，上一篇的源码就是没有压缩下的情况），就是多了一个用 bitmap 计算数组下标的过程，方式也跟上文所讲的一样，对于这个<code>popCount</code>方法，我把源码也贴出来：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">popCount</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  x -= (x &gt;&gt; <span class="number">1</span>) &amp; <span class="number">0x55555555</span>;</span><br><span class="line">  x = (x &amp; <span class="number">0x33333333</span>) + ((x &gt;&gt; <span class="number">2</span>) &amp; <span class="number">0x33333333</span>);</span><br><span class="line">  x = (x + (x &gt;&gt; <span class="number">4</span>)) &amp; <span class="number">0x0f0f0f0f</span>;</span><br><span class="line">  x += x &gt;&gt; <span class="number">8</span>;</span><br><span class="line">  x += x &gt;&gt; <span class="number">16</span>;</span><br><span class="line">  <span class="keyword">return</span> x &amp; <span class="number">0x7f</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="为什么是32"><a href="#为什么是32" class="headerlink" title="为什么是32"></a>为什么是32</h1><p>上一篇我们提到了 Immutable.js 的 Vector Trie 采用了 32 作为数组的长度，也解释了由于采用了<code>位分区</code>，该数字只能是2的整数次幂，所以不能是 31、33 等。但8、16、64等等呢？这是通过实际测试得出的，见下图：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/time.png" width="500"><br>图中分别是查找和更新的时间，看上去似乎 8 或 16 更好？考虑到平时的使用中，查找比更新频次高很多，所以 Immutable.js 选择了 32。</p>
+<h1 id="回顾"><a href="#回顾" class="headerlink" title="回顾"></a>回顾</h1><p>现在，我们就能理解第一篇文章开头的截图了：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/console截图.png" width="500"><br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/console截图2.png" width="500"><br>我们可以看到， map 里主要有三种类型的节点：</p>
+<ul>
+<li><code>HashArrayMapNode</code>，拥有的子节点数量 ＞16 ，拥有的数组长度为 32</li>
+<li><code>BitmapIndexedNode</code>，拥有的子节点数量 ≤16 ，拥有的数组长度与子节点数量一致，经由 bitmap 压缩</li>
+<li><code>ValueNode</code>，叶子节点，存储 key 和 value</li>
+</ul>
+<p>此外，每个节点似乎都有个<code>ownerID</code>属性，这又是做什么的呢？它涉及到 Immutable.js 中的可变数据结构。</p>
+<h1 id="Transient"><a href="#Transient" class="headerlink" title="Transient"></a>Transient</h1><p>其实可以说 Immutable.js 中的数据结构有两种形态，“不可变”和“可变”。虽然“不可变”是 Immutable.js 的主要优势，但“可变”形态下的操作当然效率更高。有时对于某一系列操作，我们只需要得到这组操作结束后的状态，若中间的每一个操作都用不可变数据结构去实现显然有些多余。这种情景下，我们就可以使用<code><a href="http://facebook.github.io/immutable-js#batching-mutations" target="_blank" rel="noopener">withMutations</a></code>方法对相应数据结构进行临时的“可变”操作，最后再返回一个不可变的结构，这就是<code>Transient</code>，比如这样：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> Immutable.Map(&#123;&#125;);</span><br><span class="line">map = map.withMutations(<span class="function">(<span class="params">m</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="comment">// 开启Transient</span></span><br><span class="line">  m.set(<span class="string">'a'</span>, <span class="number">1</span>); <span class="comment">// 我们可以直接在m上进行修改，不需要 m = m.set('a', 1)</span></span><br><span class="line">  m.set(<span class="string">'b'</span>, <span class="number">2</span>);</span><br><span class="line">  m.set(<span class="string">'c'</span>, <span class="number">3</span>);</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// Transient结束</span></span><br></pre></td></tr></table></figure><br>实际上， Immutable.js 里很多方法都使用了<code>withMutations</code>构造临时的可变数据结构来提高效率，比如 Map 中的<code>map</code>、<code>deleteAll</code>方法以及 Map 的构造函数。而在一个不可变数据结构中实现临时的可变数据结构的关键（有点拗口XD），就是这个<code>ownerID</code>。下图对比了使用与不使用<code>Transient</code>时的区别：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/transient.png" width="600"><br>显然，使用<code>Transient</code>后由于无需每次生成新的节点，效率会提高空间占用会减少。在开启<code>Transient</code>时，根节点会被赋与一个新的<code>ownerID</code>，在<code>Transient</code>完成前的每一步操作只需遵循下面的逻辑即可：</p>
+<ol>
+<li>若要操作的节点的<code>ownerID</code>与父节点的不一致，则生成新的节点，把旧节点上的值拷贝过来，其<code>ownerID</code>更新为父节点的<code>ownerID</code>，然后进行相应操作；</li>
+<li>若要操作的节点的<code>ownerID</code>与父节点的一致，则直接在该节点上操作；<br>下面先我们看下 Immutable.js 中开启<code>Transient</code>的相关源码：<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">OwnerID</span>(<span class="params"></span>) </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">asMutable</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.__ownerID ? <span class="keyword">this</span> : <span class="keyword">this</span>.__ensureOwner(<span class="keyword">new</span> OwnerID());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">withMutations</span>(<span class="params">fn</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> mutable = <span class="keyword">this</span>.asMutable();</span><br><span class="line">  fn(mutable);</span><br><span class="line">  <span class="keyword">return</span> mutable.wasAltered() ? mutable.__ensureOwner(<span class="keyword">this</span>.__ownerID) : <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+它给了根节点一个<code>ownerID</code>，这个<code>ownerID</code>会在接下来的操作中按照上面的逻辑使用。这段代码有个“骚操作”，就是用 JS 的对象地址去作为 ID ，因为每次 new 之后的对象的地址肯定与之前的对象不同，所以用这种方法可以很简便高效地构造一套 ID 体系。<br>下面再看下开启后进行操作时的一段源码（ Map 中的<code>set</code>操作就会调用这个<code>update</code>方法）：<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">update(ownerID, shift, keyHash, key, value, didChangeSize, didAlter) &#123;</span><br><span class="line">  <span class="comment">// ...省略前面的代码</span></span><br><span class="line">  <span class="keyword">const</span> isEditable = ownerID &amp;&amp; ownerID === <span class="keyword">this</span>.ownerID;</span><br><span class="line">  <span class="keyword">const</span> newNodes = setAt(nodes, idx, newNode, isEditable);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (isEditable) &#123;</span><br><span class="line">    <span class="keyword">this</span>.count = newCount;</span><br><span class="line">    <span class="keyword">this</span>.nodes = newNodes;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> HashArrayMapNode(ownerID, newCount, newNodes);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+与前面讲的逻辑一样，先比较该节点<code>ownerID</code>与传进来父节点的是否一致，然后直接在节点上操作或生成新的节点。</li>
+</ol>
+<h1 id="hash冲突"><a href="#hash冲突" class="headerlink" title="hash冲突"></a>hash冲突</h1><p>这块的内容就没什么新东西了，任何语言或库里对于 hashMap 的实现都需考虑到 hash 冲突的问题。我们主要看一下 Immutable.js 是怎么处理的。<br>要上一篇我们知道了，在往 Map 里存一对 key、value 时， Immutable.js 会先对 key 进行 hash ，根据 hash 后的值存到树的相应位置里。不同的 key 被 hash 后的结果是可能相同的，即便概率应当很小。<br>hash 冲突是一个很基本的问题，解决方法有很多，这里最简单适用的方法就是把冲突的节点扩展成一个线性结构，即数组，数组里直接存一组组 key 和 value ，查找到此处时则遍历该数组找到匹配的 key 。虽然这里的时间复杂度会变成线性的，但考虑到发生 hash 冲突的概率很低，所以时间复杂度的增加可以忽略不计。<br>我发现 Immutable.js 的 hash 函数对<code>abc</code>和<code>bCc</code>的 hash 结果都是 <code>96354</code>，在同一个 map 里用这两个 key 就会造成 hash 冲突，我们把这个 map log 出来如下：<br><img src="/2018/09/19/深入探究immutable.js的实现机制（二）/console.png" width="600"><br>Immutable.js 用了一个叫做<code>HashCollisionNode</code>的节点去处理发生冲突的键值，它们被放在<code>entries</code>数组里。<br>大家也可以自己试试，代码如下：<br><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> Immutable.Map(&#123;&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">  map = map.set(<span class="built_in">Math</span>.random(), i); <span class="comment">// 随便塞一点别的数据</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">map = map.set(<span class="string">'abc'</span>, <span class="string">'value1'</span>);</span><br><span class="line">map = map.set(<span class="string">'bCc'</span>, <span class="string">'value2'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(map)</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<h3 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h3><p><a href="https://hypirion.com/musings/understanding-persistent-vector-pt-1" target="_blank" rel="noopener">https://hypirion.com/musings/understanding-persistent-vector-pt-1</a><br><a href="https://io-meter.com/2016/11/06/functional-go-intro-to-hamt" target="_blank" rel="noopener">https://io-meter.com/2016/11/06/functional-go-intro-to-hamt</a><br><a href="https://cdn.oreillystatic.com/en/assets/1/event/259/Immutable%20data%20structures%20for%20functional%20JavaScript%20Presentation.pdf" target="_blank" rel="noopener">https://cdn.oreillystatic.com/en/assets/1/event/259/Immutable%20data%20structures%20for%20functional%20JavaScript%20Presentation.pdf</a><br><a href="https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf" target="_blank" rel="noopener">https://infoscience.epfl.ch/record/169879/files/RMTrees.pdf</a><br><a href="http://lampwww.epfl.ch/papers/idealhashtrees.pdf" target="_blank" rel="noopener">http://lampwww.epfl.ch/papers/idealhashtrees.pdf</a><br><a href="https://github.com/funfish/blog" target="_blank" rel="noopener">https://github.com/funfish/blog</a><br><a href="https://github.com/facebook/immutable-js/blob/e65e5af806ea23a32ccf8f56c6fabf39605bac80/src" target="_blank" rel="noopener">https://github.com/facebook/immutable-js/blob/e65e5af806ea23a32ccf8f56c6fabf39605bac80/src</a></p>
+</blockquote>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/" data-id="cjm8wxkj3000darr9iqwhn21u" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-bitmap-transient-hash冲突-Vector-Trie-Clojure/">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,bitmap,transient,hash冲突,Vector Trie,Clojure</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2018/09/12/深入探究immutable.js的实现机制（一）/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">深入探究immutable.js的实现机制（一）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JavaScript-WeakMap-ES6/">JavaScript,WeakMap,ES6</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/css-white-space-word-break-word-wrap-html/">css,white-space,word-break,word-wrap,html</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-Vector-Trie-Clojure/">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,Vector Trie,Clojure</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-bitmap-transient-hash冲突-Vector-Trie-Clojure/">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,bitmap,transient,hash冲突,Vector Trie,Clojure</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/" style="font-size: 10px;">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a> <a href="/tags/JavaScript-WeakMap-ES6/" style="font-size: 10px;">JavaScript,WeakMap,ES6</a> <a href="/tags/css-white-space-word-break-word-wrap-html/" style="font-size: 10px;">css,white-space,word-break,word-wrap,html</a> <a href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-Vector-Trie-Clojure/" style="font-size: 10px;">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,Vector Trie,Clojure</a> <a href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-bitmap-transient-hash冲突-Vector-Trie-Clojure/" style="font-size: 10px;">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,bitmap,transient,hash冲突,Vector Trie,Clojure</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">September 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">August 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/09/19/深入探究immutable.js的实现机制（二）/">深入探究immutable.js的实现机制（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/09/12/深入探究immutable.js的实现机制（一）/">深入探究immutable.js的实现机制（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2018/09/04/彻底搞懂https的加密机制/">彻底搞懂HTTPS的加密机制</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/">彻底搞懂white-space、word-break、word-wrap</a>
+          </li>
+        
+          <li>
+            <a href="/2018/08/28/JavaScript-使用WeakMap创建私有属性/">JavaScript-使用WeakMap创建对象的私有属性</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 顾伊凡<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
