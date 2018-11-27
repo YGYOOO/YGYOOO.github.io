@@ -24,6 +24,25 @@
 	<body>
 		<div class="reveal">
 			<div class="slides" data-notes="Something important">
+
+
+<section>
+	<section data-markdown>
+		# ES6
+		- let & const、变量提升、暂时死区（TDZ）
+		- 延展符
+		- 解构赋值
+		- 模板字符串
+		- 函数
+		- Generator
+		- 可迭代协议
+		- Map/WeakMap(Set)
+		- Promise & async function、macro task & micro task
+		- Proxy
+		- Reflect
+	</section>
+</section>
+
 <section>
 	<section data-markdown>
 		# let & const
@@ -68,6 +87,9 @@ var a = 1;
 			新：
 			<img src="img/let_new.png" />
 		</script>
+	</section>
+	<section data-markdown>
+		let、const 也会导致变量提升，与 var 不同的是，var 的“提升”有“创建”和“初始化”两个过程（初始化为 undefined），而 let 和 const 仅有“创建”这一个过程。
 	</section>
 	<section data-markdown>
 		### 值得读一下  
@@ -597,7 +619,7 @@ https://juejin.im/post/5b852d51f265da43351d6580
 
 <section>
 	<section data-markdown>
-  # Promise && async function
+  # Promise & async function
 ```
 const promise1 = new Promise(function(resolve, reject) {
 	setTimeout(function() {
@@ -676,9 +698,69 @@ console.log(obj.a); // 1
 console.log('b' in obj, obj.b); // false, 0
 delete obj.a // property 'a' removed
 console.log(obj); // Proxy {}
+[run]
+```
+	</section>
+	<section>
+```
+handler.get // obj.foo
+handler.set // obj.foo = 1
+handler.has // "foo" in obj
+handler.construct // new func()
+handler.deleteProperty // delete obj.foo
+handler.ownKeys // Object.keys(obj)、Object.getOwnPropertyNames(obj)
+handler.getOwnPropertyDescriptor // Object.getOwnPropertyDescriptor(obj, "foo")
+handler.defineProperty // Object.defineProperty(obj, "foo", {})
+handler.getPrototypeOf // Object.getPrototypeOf(obj)、obj.__proto__
+handler.setPrototypeOf // Object.setPrototypeOf(obj)
+handler.preventExtensions // Object.preventExtensions(obj)
+handler.isExtensible // Object.isExtensible(obj)
+handler.apply // 当目标对象为函数，且被调用时触发。
+```
+		</section>
+</section>
+
+<section>
+	<section data-markdown>
+# Reflect
+- 将Object对象的一些明显属于语言内部的方法（比如Object.defineProperty），放到Reflect对象上
+- 用一个单一的全局对象去存储这些方法，能够保持其它的JavaScript代码的整洁、干净
+- 将一些命令式的操作如delete，in等使用函数来替代，这样做的目的是为了让代码更加好维护，更容易向下兼容
+	</section>
+	<section data-markdown>
+```
+Reflect.apply // Function.prototype.apply
+Reflect.construct // new
+Reflect.defineProperty // Object.defineProperty
+Reflect.deleteProperty // Object.deleteProperty
+Reflect.get // obj.foo
+Reflect.set // obj.foo = 1
+Reflect.has // in
+Reflect.getOwnPropertyDescriptor //  Object.getOwnPropertyDescriptor
+Reflect.getPrototypeOf // Object.getPrototypeOf
+Reflect.setPrototypeOf // Object.setPrototypeOf
+Reflect.isExtensible // Object.isExtensible
+Reflect.ownKeys // Object.getOwnPropertyNames(obj).concat(Object.getOwnPropertySymbols(obj))
+Reflect.preventExtensions // Object.preventExtensions
+```
+	</section>
+	<section data-markdown>
+```
+let num = 1;
+console.log(num.a);
+console.log(Reflect.get(num, 'a')); // TypeError
+[run]
+```
+```
+let num = 1;
+num.a = 123;
+Reflect.set(num, 'a', 123); // TypeError
+[run]
 ```
 	</section>
 </section>
+
+
   		</div>
 		</div>
 
@@ -697,6 +779,7 @@ console.log(obj); // Proxy {}
 		</script>
 
 		<script>
+			// 实现文中代码的运行功能（eval运行），匹配末尾为“[run]”的
 			const runCode = function() {
 				const code = this.parentNode.innerHTML
 					.replace(/(<span.*?>)|(<\/span>)|(<div.*div>)/g, '')
@@ -725,6 +808,7 @@ console.log(obj); // Proxy {}
 			}, 50);
 		</script>
 
+		<!-- 自定义的样式 -->
 		<style rel="stylesheet">
 			.reveal h1 {
 				font-size: 3.1rem;
@@ -738,18 +822,18 @@ console.log(obj); // Proxy {}
 				font-size: 2rem;
 				text-transform: none;
 			}
-			.reveal p {
-				font-size: 1.6rem;
-				line-height: 2.2rem;
-				text-align: left;
+			.reveal p,ul {
+				font-size: 1.6rem !important;
+				line-height: 2.2rem !important;
+				text-align: left !important;
 			}
 			.reveal p > img {
 				margin: 0 auto;
 				display: block;
 			}
 			.hljs::-webkit-scrollbar {
-				width: 0px;  /* remove scrollbar space */
-				background: transparent;  /* optional: just make scrollbar invisible */
+				width: 0px;
+				background: transparent;
 			}
 			.reveal table th, .reveal table td {
 				padding: .5rem;
