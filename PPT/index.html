@@ -46,7 +46,7 @@
 <section>
 	<section data-markdown>
 		# let & const
-		ES6 新增了let和命令，用来声明变量。它的用法类似于var，但是所声明的变量，只在let命令所在的代码块内有效。
+		ES6 新增了let和const命令，用来声明变量。它的用法类似于var，但是所声明的变量，只在let命令所在的代码块内有效。
 ```javascript
 {
 	var a = 1;
@@ -87,9 +87,6 @@ var a = 1;
 			新：
 			<img src="img/let_new.png" />
 		</script>
-	</section>
-	<section data-markdown>
-		let、const 也会导致变量提升，与 var 不同的是，var 的“提升”有“创建”和“初始化”两个过程（初始化为 undefined），而 let 和 const 仅有“创建”这一个过程。
 	</section>
 	<section data-markdown>
 		### 值得读一下  
@@ -188,29 +185,15 @@ a total of 294 bucks?
 ```
 	</section>
 	<section data-markdown>
-			### 对象的延展符（es2018/es9）
-```javascript
-let obj1 = { foo: 'bar', x: 42 };
-let obj2 = { foo: 'baz', y: 13 };
-
-let mergedObj = { ...obj1, ...obj2 };// { foo: "baz", x: 42, y: 13 }
-[run]
-```
-	</section>
-	<section data-markdown>
 		### 带标签的模板字符串
 ```javascript
 let a = 'aaaa';
 let b = 10;
 
 function fn(arr, v1, v2) {
-	console.log(arr[0]); // lalala
-	console.log(arr[1]); //  yayaya
-	console.log(arr[2]); //
-	console.log(v1); // aaaa
-	console.log(v2); // 10
-
-	return "OK";
+  console.log(arr); // ["lalala ", " yayaya ", ""]
+  console.log(v1); // aaaa
+  console.log(v2); // 10
 }
 
 fn`lalala ${a} yayaya ${b}`;
