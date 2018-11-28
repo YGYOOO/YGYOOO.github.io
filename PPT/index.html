@@ -316,7 +316,6 @@ new Person3();
 <section>
 	<section data-markdown>
 		# Generator
-		生成器对象是由一个 generator function 返回的，并且它符合可迭代协议和迭代器协议。
 ```javascript
 function* gen() { 
 	yield 1;
@@ -377,7 +376,7 @@ for (let value of iterable) {
 	<section data-markdown>
 		<script type="text/template">
 			# 可迭代协议
-			可迭代协议允许 JavaScript 对象去定义或定制它们的迭代行为, 例如（定义）在一个 for..of 结构中什么值可以被循环（得到）。   
+			可迭代协议允许 JavaScript 对象去定义或定制它们的迭代行为, 例如（定义）在一个 for..of 结构中什么值可以被循环得到。   
 			为了变成可迭代对象， 一个对象必须实现 **@@iterator** 方法, 意思是这个对象（或者它原型链 prototype chain 上的某个对象）必须有一个名字是 **Symbol.iterator** 的属性:   
 			<table>
 				<thead>
@@ -466,6 +465,17 @@ obj[Symbol.iterator] = function* () {
 	yield 2;
 	yield 3;
 };
+
+let itr = obj[Symbol.iterator]();
+console.log(itr.next().value); // 1
+console.log(itr.next().value); // 2
+console.log(itr.next().value); // 3
+console.log(itr.next().value); // undefined
+
+for(let val of obj) console.log(val); // 1 2 3
+
+console.log([...obj]); // [1, 2, 3]
+[run]
 ```
 	</section>
 	<section data-markdown>
@@ -684,7 +694,7 @@ console.log(obj); // Proxy {}
 [run]
 ```
 	</section>
-	<section>
+	<section data-markdown>
 ```
 handler.get // obj.foo
 handler.set // obj.foo = 1
