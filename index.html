@@ -62,6 +62,53 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-写了一个可以拦截ajax请求并修改返回结果的插件" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/03/04/写了一个可以拦截ajax请求并修改返回结果的插件/" class="article-date">
+  <time datetime="2019-03-04T08:06:05.000Z" itemprop="datePublished">2019-03-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/03/04/写了一个可以拦截ajax请求并修改返回结果的插件/">写了一个可以拦截ajax请求并修改返回结果的chrome插件</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>这个插件可以拦截页面上的 ajax 请求，并把返回结果替换成任意文本。它对 mock 数据、排查一些线上问题等会有很大帮助。（当然 chales 等抓包软件也可以做到，然而使用起来比较繁琐，做成 chrome 插件的形式会方便许多）</p>
+<p>以下是使用效果，通过修改 ajax 请求结果，我把第一条文章标题替换成了“这标题特调皮（Σ（ﾟдﾟlll）句内三押×2）”：</p>
+<img src="/2019/03/04/写了一个可以拦截ajax请求并修改返回结果的插件/拦截掘金.png" width="600">
+<h1 id="使用示例（视频）"><a href="#使用示例（视频）" class="headerlink" title="使用示例（视频）"></a>使用示例（视频）</h1><p><a href="http://t.cn/EMvR6pa?m=4347641385182648&amp;u=5352731024" target="_blank" rel="noopener">http://t.cn/EMvR6pa?m=4347641385182648&amp;u=5352731024</a></p>
+<h1 id="Chrome-商店地址"><a href="#Chrome-商店地址" class="headerlink" title="Chrome 商店地址"></a>Chrome 商店地址</h1><p>地址：<a href="https://chrome.google.com/webstore/detail/ajax-interceptor/nhpjggchkhnlbgdfcbgpdpkifemomkpg" target="_blank" rel="noopener">https://chrome.google.com/webstore/detail/ajax-interceptor/nhpjggchkhnlbgdfcbgpdpkifemomkpg</a></p>
+<p>你也可以直接搜索 <b>Ajax Interceptor</b> 进行安装</p>
+<h1 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h1><ol>
+<li>当你不需要使用该插件时，建议把开关关上，以免对页面正常浏览造成影响</li>
+<li>暂不支持由 fetch 发起的请求</li>
+</ol>
+<h1 id="大致原理"><a href="#大致原理" class="headerlink" title="大致原理"></a>大致原理</h1><p>页面加载时往页面上注入 js 代码，这段 js 会生成一个 XMLHttpRequest 的代理对象，并把 window.XMLHttpRequest 替换成这个对象。该对象又会对 onreadystatechange 和 onload 两个回调函数做特殊处理，把 responseText 和 response 的值覆盖为你设置的值。更详细的原理推荐看下这篇文章：<a href="https://www.jianshu.com/p/7337ac624b8e" target="_blank" rel="noopener">https://www.jianshu.com/p/7337ac624b8e</a> ，该插件实现原理与之基本类似。<br>其它就是这段页面上的 js 代码和右侧弹出的 iframe (用户界面)以及插件后台代码一些数据交互和存储上的实现，这部分比较杂就不介绍了~</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2019/03/04/写了一个可以拦截ajax请求并修改返回结果的插件/" data-id="cjt066zfj0001e0z4ow7k8twn" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-Javascript的尾递归及其优化" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2018/10/17/Javascript的尾递归及其优化/" class="article-date">
@@ -102,7 +149,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/10/17/Javascript的尾递归及其优化/" data-id="cjned9ulb0000qhr9eyvdyxaf" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/10/17/Javascript的尾递归及其优化/" data-id="cjt066zfe0000e0z4wmtot6vi" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/尾递归-尾调用-trampoline-递归-迭代/">尾递归,尾调用,trampoline,递归,迭代</a></li></ul>
@@ -165,7 +212,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/" data-id="cjncrdrno0008dhr9j7mo38ty" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/09/19/深入探究immutable.js的实现机制（二）/" data-id="cjt066zg1000de0z46b4cxp24" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-bitmap-transient-hash冲突-Vector-Trie-Clojure/">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,bitmap,transient,hash冲突,Vector Trie,Clojure</a></li></ul>
@@ -223,7 +270,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/" data-id="cjncrdrnm0005dhr9dlrujvcv" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/09/12/深入探究immutable.js的实现机制（一）/" data-id="cjt066zg0000be0z4lrha2b3t" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/immutable-js-immutable-JavaScript-持久化数据结构-结构共享-Vector-Trie-Clojure/">immutable.js,immutable,JavaScript,持久化数据结构,结构共享,Vector Trie,Clojure</a></li></ul>
@@ -332,7 +379,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/09/04/彻底搞懂https的加密机制/" data-id="cjncrdrne0003dhr9eklg9go6" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/09/04/彻底搞懂https的加密机制/" data-id="cjt066zfz000ae0z42t8kwic7" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/HTTPS-SSL-TLS-加密-对称加密-非对称加密-数字证书-数字签名/">HTTPS,SSL,TLS,加密,对称加密,非对称加密,数字证书,数字签名</a></li></ul>
@@ -459,7 +506,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/08/31/彻底搞懂white-space、word-break、word-wrap/" data-id="cjncrdrnj0004dhr9534cpcrg" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/08/31/彻底搞懂white-space、word-break、word-wrap/" data-id="cjt066zfq0004e0z4gpkkl8vk" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/css-white-space-word-break-word-wrap-html/">css,white-space,word-break,word-wrap,html</a></li></ul>
@@ -514,7 +561,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2018/08/28/JavaScript-使用WeakMap创建私有属性/" data-id="cjncrdrmz0000dhr91aaro3on" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2018/08/28/JavaScript-使用WeakMap创建私有属性/" data-id="cjt066zfn0003e0z4wywbmvnt" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/JavaScript-WeakMap-ES6/">JavaScript,WeakMap,ES6</a></li></ul>
@@ -558,7 +605,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">October 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">September 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">August 2018</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">March 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">October 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">September 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/08/">August 2018</a></li></ul>
     </div>
   </div>
 
@@ -569,6 +616,10 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2019/03/04/写了一个可以拦截ajax请求并修改返回结果的插件/">写了一个可以拦截ajax请求并修改返回结果的chrome插件</a>
+          </li>
         
           <li>
             <a href="/2018/10/17/Javascript的尾递归及其优化/">Javascript的尾递归及其优化</a>
@@ -586,10 +637,6 @@
             <a href="/2018/09/04/彻底搞懂https的加密机制/">彻底搞懂HTTPS的加密机制</a>
           </li>
         
-          <li>
-            <a href="/2018/08/31/彻底搞懂white-space、word-break、word-wrap/">彻底搞懂white-space、word-break、word-wrap</a>
-          </li>
-        
       </ul>
     </div>
   </div>
@@ -602,7 +649,7 @@
   
   <div class="outer">
     <div id="footer-info" class="inner">
-      &copy; 2018 顾伊凡<br>
+      &copy; 2019 顾伊凡<br>
       Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
